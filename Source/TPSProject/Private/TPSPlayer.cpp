@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
 
 
 // Sets default values
@@ -42,6 +43,13 @@ ATPSPlayer::ATPSPlayer()
 		SniperGunComp->SetRelativeRotation(FRotator(0.000000,0.000000,-0.000000));
 		SniperGunComp->SetRelativeScale3D(FVector(0.250000,0.250000,0.250000));
 	}
+	// 경로 마지막에 _C(BP를 동적 로드)
+	ConstructorHelpers::FClassFinder<UUserWidget> TempUI(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/WBP_Crosshair.WBP_Crosshair_C'"));
+	if (TempUI.Succeeded())
+	{
+		CrosshairUIWidget = TempUI.Class;
+	}
+	
 	// 월드에 Instance로 등록하면 자동으로 PlayerController가
 	// Possess 한다.
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
@@ -55,6 +63,9 @@ void ATPSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// crosshair 인스턴스 생성
+	CrosshairUI = CreateWidget(GetWorld(), CrosshairUIWidget);
+	CrosshairUI->AddToViewport();
 }
 
 // Called every frame
@@ -75,6 +86,8 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	PlayerInputComponent->BindAxis(TEXT("Vertical"), this, &ATPSPlayer::MoveForward);
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ATPSPlayer::PlayerJump);
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ATPSPlayer::Fire);
+	PlayerInputComponent->BindAction(TEXT("Zoom"), IE_Pressed, this, &ATPSPlayer::Zoom);
+	PlayerInputComponent->BindAction(TEXT("Zoom"), IE_Released, this, &ATPSPlayer::Release);
 }
 
 void ATPSPlayer::Turn(float Value)
@@ -111,7 +124,7 @@ void ATPSPlayer::Fire()
 	// out hit
 	FHitResult HitInfo;
 	// 
-	FVector startLocation = GetActorLocation();	
+	FVector startLocation = Camera->GetComponentLocation();	
 	FVector endLocation = GetActorLocation()+ Camera->GetForwardVector() * 50000.0f;
 	// 쿼리문(LineTrace에서 내 객체 제외)
 	FCollisionQueryParams Params;
@@ -126,3 +139,16 @@ void ATPSPlayer::Fire()
 			HitInfo.GetComponent()->AddImpulseAtLocation(Camera->GetForwardVector() * 100000, HitInfo.Location);
 	}
 }
+
+void ATPSPlayer::Zoom()
+{
+
+	Camera->SetFieldOfView(ZoomFov);
+}
+
+void ATPSPlayer::Release()
+{
+	Camera->SetFieldOfView(90.0f);
+}
+
+

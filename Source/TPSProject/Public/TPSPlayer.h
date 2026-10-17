@@ -30,7 +30,7 @@ protected:
 	// SringArm 컴포넌트 추가
 	UPROPERTY(VisibleAnywhere)
 	class USpringArmComponent* SpringArm;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UCameraComponent* Camera;
 	UPROPERTY(VisibleAnywhere)
 	class UStaticMeshComponent* SniperGunComp;
@@ -50,4 +50,16 @@ public:
 	class UParticleSystem* BulletEffect;
 	
 	void Fire();
+
+	//UI
+	UPROPERTY(EditDefaultsOnly, Category=UI)
+	TSubclassOf<class UUserWidget> CrosshairUIWidget;
+	//Instance
+	UPROPERTY()
+	class UUserWidget* CrosshairUI;
+	
+	UPROPERTY(EditAnywhere)
+	float ZoomFov = 30;
+	void Zoom();
+	void Release();
 };
